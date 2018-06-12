@@ -65,7 +65,8 @@ begin
 	end if;
 	
 	delete from usuarios_grupos UG where UG.uid=new.uid;
-
+end;
+$$language plpgsql;
 
 create trigger del_dep_usu
 before delete
