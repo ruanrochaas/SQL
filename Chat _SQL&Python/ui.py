@@ -89,6 +89,7 @@ def verificarCmd(cmd):
         return False
     elif cmd[0] not in listaComandos:
         print("Comando inexistente.")
+        return False
     elif cmd[0] == "help":
         print(helpTexto)
         return False
