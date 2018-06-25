@@ -1,5 +1,5 @@
 ## Chat
-Sistema de chat utilizando Python 3 e Postgresql.
+Sistema de chat utilizando Python 3 + Psycopg2 e Postgresql.
 
 Veja o vídeo demonstrativo clicando na imagem abaixo:
 
