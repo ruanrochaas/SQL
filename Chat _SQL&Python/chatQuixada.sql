@@ -1,3 +1,4 @@
+
 create table usuario(
 	uid serial primary key,
 	unome varchar
@@ -32,39 +33,41 @@ create or replace function func_del_dep_usu()
 returns trigger as $$
 declare
 	min_uid int;
-	grupos_administrados cursor is (select gid from grupo Gr where Gr.uid=new.uid);
+	grupos_administrados cursor is (select gid from grupo Gr where Gr.id_admin=old.uid);
 	id_grupo_adm int;
-	grupo_onde_tem_msg cursor is (select gid from mensagem Msg where Msg.uid=new.uid);
+	grupo_onde_tem_msg cursor is (select gid from mensagem Msg where Msg.uid=old.uid);
 	id_grupo_msg int;
 begin
-	if (new.uid in (select id_admin from grupo)) then
+	if (old.uid in (select id_admin from grupo)) then
 		open grupos_administrados;
 		fetch grupos_administrados into id_grupo_adm;
 		loop
 			exit when not found;
 			select min(uid) into min_uid from usuarios_grupos where gid=id_grupo_adm;
-			if not exists ((select uid from usuarios_grupos where gid=id_grupo_adm)except(select uid from usuario U where U.uid=new.uid)) then
+			if not exists ((select uid from usuarios_grupos where gid=id_grupo_adm)except(select uid from usuario U where U.uid=old.uid)) then
 				delete from grupo where gid=id_grupo_adm;
 			else
-				update table grupo set id_admin=min_uid where gid=id_grupo_adm;
+				update grupo set id_admin=min_uid where gid=id_grupo_adm;
 			end if;
 			fetch grupos_administrados into id_grupo_adm;
 		end loop;
 		close grupos_administrados;
 	end if;
 	
-	if (new.uid in (select uid from mensagem)) then
+	if (old.uid in (select uid from mensagem)) then
 		open grupo_onde_tem_msg;
 		fetch grupo_onde_tem_msg into id_grupo_msg;
 		loop
 			exit when not found;
 			select min(uid) into min_uid from usuario;
-			update table mensagem set uid=min_uid where gid=id_grupo_msg;
+			update mensagem set uid=min_uid where gid=id_grupo_msg and uid=old.uid;
 			fetch grupo_onde_tem_msg into id_grupo_msg;
 		end loop;
 	end if;
 	
-	delete from usuarios_grupos UG where UG.uid=new.uid;
+	delete from usuarios_grupos UG where UG.uid=old.uid;
+	
+	return old;
 end;
 $$language plpgsql;
 
@@ -78,9 +81,9 @@ execute procedure func_del_dep_usu();
 create or replace function func_del_dep_grupo()
 returns trigger as $$
 begin
-	delete from usuarios_grupos UG where UG.gid=new.gid;
-	delete from mensagem Me where Me.gid=new.gid;
-	return new;
+	delete from usuarios_grupos UG where UG.gid=old.gid;
+	delete from mensagem Me where Me.gid=old.gid;
+	return old;
 end;
 $$language plpgsql;
 
@@ -89,3 +92,6 @@ before delete
 on grupo
 for each row
 execute procedure func_del_dep_grupo();
+
+
+
